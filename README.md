@@ -52,11 +52,11 @@
 
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/tdKjnnj8k4dt4Pik8DOnp0yYffp2/share/7d3366945eb432ceb06191adb4fca105
+* MSAEz 로 모델링한 이벤트스토밍 결과:  http://www.msaez.io/#/storming/2g5SbEbUqzXH8UjIkG1viaXlcoq2/mine/b90af39ae23bc6868258e50d1882d9e7
 
 
 ### 이벤트 도출
-![image](https://user-images.githubusercontent.com/84000863/121367196-11af7480-c975-11eb-9cc9-2b3a693f1ec5.png)
+
 
 ### 부적격 이벤트 탈락
 ![image](https://user-images.githubusercontent.com/84000863/121383633-8dfc8480-c982-11eb-8e05-a111676932d6.png)
