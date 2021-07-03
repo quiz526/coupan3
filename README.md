@@ -62,7 +62,7 @@
 ![ddd2](https://user-images.githubusercontent.com/84000890/124348178-6a47f980-dc23-11eb-9982-3978d8dfcd67.jpg)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-        - 예약내역 조회됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
+    - 구매이력을 조회함 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
 
 ### 액터, 커맨드 부착하여 읽기 좋게
 ![ddd3](https://user-images.githubusercontent.com/84000890/124348179-6caa5380-dc23-11eb-88eb-0fdf5ae6fb2d.jpg)
@@ -149,10 +149,10 @@ mvn spring-boot:run
 
 ## DDD 의 적용
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 아래 Product가 그 예시이다.
+- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. 아래 coupon가 그 예시이다.
 
 ```
-package carrent;
+package coupan;
 
 import javax.persistence.*;
 import org.springframework.beans.BeanUtils;
@@ -160,15 +160,20 @@ import java.util.List;
 import java.util.Date;
 
 @Entity
-@Table(name="Product_table")
-public class Product {
+@Table(name="Coupon_table")
+public class Coupon {
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    private String name;
+    private Long couponId;
+    private String couponName;
+    private Integer amt;
     private Integer stock;
-    private Long productId;
+
+
+.....
+
 
     public Long getId() {
         return id;
@@ -177,12 +182,26 @@ public class Product {
     public void setId(Long id) {
         this.id = id;
     }
-    public String getName() {
-        return name;
+    public Long getCouponId() {
+        return couponId;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setCouponId(Long couponId) {
+        this.couponId = couponId;
+    }
+    public String getCouponName() {
+        return couponName;
+    }
+
+    public void setCouponName(String couponName) {
+        this.couponName = couponName;
+    }
+    public Integer getAmt() {
+        return amt;
+    }
+
+    public void setAmt(Integer amt) {
+        this.amt = amt;
     }
     public Integer getStock() {
         return stock;
@@ -191,50 +210,43 @@ public class Product {
     public void setStock(Integer stock) {
         this.stock = stock;
     }
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
 }
 
 ```
 - Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
 ```
-package carrent;
+package coupan;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-@RepositoryRestResource(collectionResourceRel="products", path="products")
-public interface ProductRepository extends PagingAndSortingRepository<Product, Long>{
-    Product findByProductId(Long productId);
+@RepositoryRestResource(collectionResourceRel="coupons", path="coupons")
+public interface CouponRepository extends PagingAndSortingRepository<Coupon, Long>{
+    Coupon findByCouponId(Long couponId);
 
 }
 ```
-- 적용 후 REST API 의 테스트
-```
-# booking 서비스의 예약처리
-http POST http://localhost:8084/bookings qty=1 startDate=2021-07-01 endDate=2021-07-03 productId=1
+- 적용 후 REST API 의 테스트 : 쿠폰구매(order) 시, 쿠폰(coupon) 시스템 내 coupon 수량 수정되므로 order 서비스에 대한 정상 처리 여부를 확인한다.
 
-# 주문 상태 확인
-http GET http://localhost:8084/bookings
+```
+# order 서비스의 쿠폰구매 처리
+http POST http://localhost:8082/orders couponId=1 customerId=2 amt=15000 qty=2 orderDate=202107020010 status=Ordered
+
+# 구매 상태 확인
+http GET http://localhost:8082/orders
 
 ```
 
 
 ## 폴리글랏 퍼시스턴스
 
-product 서비스와 booking 서비스는 h2 DB로 구현하고, 그와 달리 store 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
+coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
 
-- product, booking 서비스의 pom.xml 설정
+- coupon, order 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ![image](https://user-images.githubusercontent.com/84000863/122320251-ed4b2d80-cf5c-11eb-85a9-e3a43e3e56d2.png)
 
-- store 서비스의 pom.xml 설정
+- pay 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ![image](https://user-images.githubusercontent.com/84000863/122320209-ddcbe480-cf5c-11eb-920c-4d3f86cac072.png)
 
@@ -244,29 +256,94 @@ product 서비스와 booking 서비스는 h2 DB로 구현하고, 그와 달리 s
 Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 - myPage 구현
+↓ 쿠폰구매 완료 시, 데이터 생성
+```
+  public void whenOrdered_then_CREATE_1 (@Payload Ordered ordered) {
+        try {
 
-![image](https://user-images.githubusercontent.com/84000863/122505157-bc3f2b80-d036-11eb-863c-01c0de3e68fe.png)
+            if (ordered.isMe()) {            
 
-- 예약 수행 후의 myPage
+                // view 객체 생성
+                Mypage mypage = new Mypage();
+                // view 객체에 이벤트의 Value 를 set 함
+                mypage.setOrderId(ordered.getId());
+                mypage.setCustomerId(ordered.getCustomerId());
+                mypage.setStatus(ordered.getStatus());
+                mypage.setQty(ordered.getQty());
+                mypage.setOrderDate(ordered.getOrderDate());
+                // view 레파지 토리에 save
+                mypageRepository.save(mypage);
+            }
 
-![image](https://user-images.githubusercontent.com/84000863/122337825-d2d37d00-cf79-11eb-8d72-c3f426879cb8.png)
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+```
+↓ 쿠폰결제 완료 시 또는 쿠폰구매취소 시에 상태값과 취소처리일시 등이 변경된다.
+```
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenPayed_then_UPDATE_1(@Payload Payed payed) {
+        try {
+            if (payed.isMe()) {
+                // view 객체 조회
+                List<Mypage> mypageList = mypageRepository.findByOrderId(payed.getOrderId());
+                for(Mypage mypage : mypageList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    mypage.setPayAmt(payed.getPayAmt());
+                    mypage.setPayDate(payed.getPayDate());
+                    mypage.setStatus(payed.getStatus());
+                    mypage.setPayCancelDate(payed.getPayCancelDate());
+                    // view 레파지 토리에 save
+                    mypageRepository.save(mypage);
+                }
+            }   
 
-- 반납 수행 후의 myPage (변경된 상태 노출값 확인 가능)
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenOrderCancelled_then_UPDATE_2(@Payload OrderCancelled orderCancelled) {
+        try {
+            if (orderCancelled.isMe()){
+                // view 객체 조회
+                List<Mypage> mypageList = mypageRepository.findByOrderId(orderCancelled.getId());
+                for(Mypage mypage : mypageList){
+                    // view 객체에 이벤트의 eventDirectValue 를 set 함
+                    mypage.setOrderCancelDate(orderCancelled.getOrderCancelDate());
+                    mypage.setStatus(orderCancelled.getStatus());
+                    // view 레파지 토리에 save
+                    mypageRepository.save(mypage);
+                }
+            }    
 
-![image](https://user-images.githubusercontent.com/84000863/122505312-0e804c80-d037-11eb-8e28-258dbddcb45e.png)
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+```
+
+- 쿠폰구매 후의 myPage [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+![image](https://user-images.githubusercontent.com/84000890/124350376-65894280-dc2f-11eb-9365-3bbee22daba8.png)
+
+- 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능) [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+![image](https://user-images.githubusercontent.com/84000890/124350394-86ea2e80-dc2f-11eb-90be-387b84e05355.png)
 
 
 ## 동기식 호출(Req/Resp)
 
-분석단계에서의 조건 중 하나로 예약(booking)->업체(store) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
+분석단계에서의 조건 중 하나로 구매(order)→쿠폰(coupon)간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
 
-- 결제서비스를 호출하기 위하여 FeignClient를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
+- 쿠폰서비스를 호출하기 위하여 FeignClient를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
 
 ```
-# (booking) ProductService.java
+# (order) CouponService.java
 
-
-package carrent.external;
+package coupan.external;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -274,13 +351,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Date;
 
+//@FeignClient(name="coupon", url="http://localhost:8081")
+@FeignClient(name="coupon", url="http://coupon:8080")
 
-@FeignClient(name="product", url="http://product:8080") 
-public interface ProductService {
-
+public interface CouponService {
     @RequestMapping(method= RequestMethod.GET, path="/chkAndModifyStock")
-    public boolean modifyStock(@RequestParam("productId") Long productId,
+    public boolean modifyStock(@RequestParam("couponId") Long couponId,
                             @RequestParam("qty") Integer qty);
 
 }
@@ -288,21 +366,30 @@ public interface ProductService {
 
 - 예약된 직후(@PostPersist) 재고수량이 업데이트 되도록 처리 (modifyStock 호출)
 ```
-# Booking.java
+# Order.java
 
-    @PostPersist
-    public void onPostPersist() {
+ @PostPersist
+    public void onPostPersist(){
+        boolean rslt = OrderApplication.applicationContext.getBean(coupan.external.CouponService.class)
+        .modifyStock(this.getCouponId(), this.getQty());
 
-            boolean rslt = BookingApplication.applicationContext.getBean(carrent.external.ProductService.class)
-            .modifyStock(this.getProductId(), this.getQty());
+        if (rslt) {
+            this.setStatus("ordered");
+            //this.setStatus(System.getenv("STATUS"));
 
-            if (rslt) {
-                
-                Booked booked = new Booked();
-                booked.setStatus("Booked");
-                BeanUtils.copyProperties(this, booked);
-                booked.publishAfterCommit();
-            } 
+            Ordered ordered = new Ordered();
+            SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
+            String orderDate = format1.format (System.currentTimeMillis());
+            this.setOrderDate(orderDate);
+            BeanUtils.copyProperties(this, ordered);
+            ordered.publishAfterCommit();            
+        }
+
+
+        //Following code causes dependency to external APIs
+        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+
+
     }
     
 ```
@@ -312,15 +399,15 @@ public interface ProductService {
 public boolean modifyStock(HttpServletRequest request, HttpServletResponse response)
         throws Exception {
                 boolean status = false;
-                Long productId = Long.valueOf(request.getParameter("productId"));
+                Long couponId = Long.valueOf(request.getParameter("couponId"));
                 int qty = Integer.parseInt(request.getParameter("qty"));
 
-                Product product = productRepository.findByProductId(productId);
+                Coupon coupon = couponRepository.findByCouponId(couponId);
 
-                if(product != null){
-                        if (product.getStock() >= qty) {
-                                product.setStock(product.getStock() - qty);
-                                productRepository.save(product);
+                if(coupon != null){
+                        if (coupon.getStock() >= qty) {
+                                coupon.setStock(coupon.getStock() - qty);
+                                couponRepository.save(coupon);
                                 status = true;
                         }
                 }
@@ -329,46 +416,42 @@ public boolean modifyStock(HttpServletRequest request, HttpServletResponse respo
         }
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 상품 시스템이 장애가 나면 예약도 못하는 것을 확인:
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 쿠폰 시스템(coupon)이 장애가 나면 예약도 못하는 것을 확인:
 
 
 
-- 상품(product) 서비스를 잠시 내려놓음 (ctrl+c)
+- 쿠폰 서비스(coupon)를 잠시 내려놓음 (ctrl+c)
 
-![image](https://user-images.githubusercontent.com/84000863/122338512-c7cd1c80-cf7a-11eb-83d8-deee04832063.png)
-
-- 예약하기(booking)
+- 쿠폰구매하기(order)
 ```
-http POST http://localhost:8084/bookings productId=1 qty=2 startDate=2021-07-03 endDate=2021-07-05
+http POST http://localhost:8082/orders couponId=2 customerId=5 amt=18000 qty=2 orderDate=202107022100 status=ordered
 ```
 < Fail >
+↓ 쿠폰구매 시 500 error 발생
+![image](https://user-images.githubusercontent.com/84000890/124350012-0e826e00-dc2d-11eb-8500-d58fc1bfe71c.png)
 
-![image](https://user-images.githubusercontent.com/84000863/122338536-d0255780-cf7a-11eb-860c-6ddb12b8c879.png)
 
-
-- 상품(product) 서비스 재기동
+- 쿠폰(coupon) 서비스 재기동
 ```
-cd product
+cd coupon
 mvn spring-boot:run
 ```
 
-- 예약하기(booking)
+- 쿠폰구매하기(order)
 ```
-http POST http://localhost:8084/bookings productId=1 qty=2 startDate=2021-07-03 endDate=2021-07-05
+http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 orderDate=2021070100100 status=Ordered
 ```
 < Success >
 
-![image](https://user-images.githubusercontent.com/84000863/122513326-3d9dba80-d045-11eb-9bea-5f22ca08a523.png)
+![image](https://user-images.githubusercontent.com/84000890/124350126-cd3e8e00-dc2d-11eb-9800-5864beba66b1.png)
 
-- 차량 등록 및 예약하기
-
-![image](https://user-images.githubusercontent.com/84000863/122513561-8190bf80-d045-11eb-9ae9-0f2fcc2ad98f.png)
-
-![image](https://user-images.githubusercontent.com/84000863/122513576-8786a080-d045-11eb-8258-c792e4f181c0.png)
-
-- 예약된 후 재고 수량 줄어듬 확인
-
-![image](https://user-images.githubusercontent.com/84000863/122513362-4a221300-d045-11eb-85a8-c1903139ce98.png)
+- 쿠폰 수량 확인을 통해 정상 req/res 처리 여부 확인
+↓ 최초 쿠폰 등록 시 1,000건 등록
+![req_res_1_쿠폰생성_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350321-03c8d880-dc2f-11eb-8451-1a24730f1e56.jpg)
+↓ 동일 쿠폰에 대해 2건 구매 완료
+![req_res_2_쿠폰구매_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350323-06c3c900-dc2f-11eb-8b1e-cc07db587734.jpg)
+↓ 쿠폰 재고가 998건으로 구매된 쿠폰 수만큼 감소
+![req_res_3_쿠폰구매한수량만큼재고감소_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350327-09262300-dc2f-11eb-8a2e-21ecd51b8e37.jpg)
 
 
 
