@@ -447,11 +447,11 @@ http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 o
 
 - 쿠폰 수량 확인을 통해 정상 req/res 처리 여부 확인
 ↓ 최초 쿠폰 등록 시 1,000건 등록
-![req_res_1_쿠폰생성_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350321-03c8d880-dc2f-11eb-8451-1a24730f1e56.jpg)
+![image](https://user-images.githubusercontent.com/84000890/124350557-4939d580-dc30-11eb-967e-9d4f15006dde.png)
 ↓ 동일 쿠폰에 대해 2건 구매 완료
 ![req_res_2_쿠폰구매_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350323-06c3c900-dc2f-11eb-8b1e-cc07db587734.jpg)
 ↓ 쿠폰 재고가 998건으로 구매된 쿠폰 수만큼 감소
-![req_res_3_쿠폰구매한수량만큼재고감소_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350327-09262300-dc2f-11eb-8a2e-21ecd51b8e37.jpg)
+![image](https://user-images.githubusercontent.com/84000890/124350614-856d3600-dc30-11eb-917d-93905da88747.png)
 
 
 
