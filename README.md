@@ -264,7 +264,7 @@ coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 
 Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 - myPage 구현
-- 
+
 ↓ 쿠폰구매 완료 시, 데이터 생성
 ```
   public void whenOrdered_then_CREATE_1 (@Payload Ordered ordered) {
@@ -335,9 +335,8 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 ```
 
 - 쿠폰구매 후의 myPage
-- 
-![image](https://user-images.githubusercontent.com/84000890/124371590-32da5b00-dcbe-11eb-8566-f1981887c6e0.png)
 
+![image](https://user-images.githubusercontent.com/84000890/124371590-32da5b00-dcbe-11eb-8566-f1981887c6e0.png)
 
 - 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능)
 
@@ -456,10 +455,15 @@ http POST http://localhost:8082/orders couponId=1 customerId=1 amt=15000 qty=2 o
 
 - 쿠폰 수량 확인을 통해 정상 req/res 처리 여부 확인
 ↓ 최초 쿠폰 등록 시 1,000건 등록
+
 ![image](https://user-images.githubusercontent.com/84000890/124350557-4939d580-dc30-11eb-967e-9d4f15006dde.png)
+
 ↓ 동일 쿠폰에 대해 2건 구매 완료
+
 ![req_res_2_쿠폰구매_빨간박스추가](https://user-images.githubusercontent.com/84000890/124350323-06c3c900-dc2f-11eb-8b1e-cc07db587734.jpg)
+
 ↓ 쿠폰 재고가 998건으로 구매된 쿠폰 수만큼 감소
+
 ![image](https://user-images.githubusercontent.com/84000890/124350614-856d3600-dc30-11eb-917d-93905da88747.png)
 
 
