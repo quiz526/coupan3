@@ -242,7 +242,7 @@ http GET http://localhost:8082/orders
 
 coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
 
-- coupon, order 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- coupon, order 서비스의 pom.xml 설정
 ```
 		<dependency>
 			<groupId>com.h2database</groupId>
@@ -250,7 +250,7 @@ coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 
 			<scope>runtime</scope>
 		</dependency>
 ```
-- pay 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- pay 서비스의 pom.xml 설정
 ```
 		<dependency>
 			<groupId>org.hsqldb</groupId>
@@ -264,6 +264,7 @@ coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 
 Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 - myPage 구현
+- 
 ↓ 쿠폰구매 완료 시, 데이터 생성
 ```
   public void whenOrdered_then_CREATE_1 (@Payload Ordered ordered) {
@@ -334,10 +335,12 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 ```
 
 - 쿠폰구매 후의 myPage
+- 
 ![image](https://user-images.githubusercontent.com/84000890/124371590-32da5b00-dcbe-11eb-8566-f1981887c6e0.png)
 
 
 - 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능)
+
 ![image](https://user-images.githubusercontent.com/84000890/124371594-3a99ff80-dcbe-11eb-971f-67e1623526dd.png)
 
 
@@ -424,13 +427,11 @@ public boolean modifyStock(HttpServletRequest request, HttpServletResponse respo
         }
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 쿠폰 시스템(coupon)이 장애가 나면 예약도 못하는 것을 확인:
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 쿠폰 시스템(coupon)이 장애가 나면 예약도 못하는 것을 확인
 
+쿠폰 서비스(coupon)를 잠시 내려놓음 (ctrl+c)
 
-
-- 쿠폰 서비스(coupon)를 잠시 내려놓음 (ctrl+c)
-
-- 쿠폰구매하기(order)
+↓쿠폰구매하기(order)
 ```
 http POST http://localhost:8082/orders couponId=2 customerId=5 amt=18000 qty=2 orderDate=202107022100 status=ordered
 ```
@@ -550,6 +551,7 @@ server:
 http POST http://localhost:8088/orders couponId=2 customerId=3 amt=18000 qty=4 orderDate=202107022050 status=Ordered 
 ```
 ↓ gateway 8080포트로 order 처리 시,  8082 포트로 링크되어 정상 처리
+
 ![image](https://user-images.githubusercontent.com/84000890/124371661-0115c400-dcbf-11eb-8184-d1a396996a52.png)
 
 
@@ -603,18 +605,22 @@ http POST http://localhost:8088/orders couponId=2 customerId=3 amt=18000 qty=4 o
 - 구매 시스템(order)는 결제 시스템(pay)와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, pay 서비스가 유지보수로 인해 잠시 내려간 상태라도 쿠폰 구매가 진행해도 문제 없다.(시간적 디커플링)
   
 ↓ 업체(store) 서비스를 잠시 내려놓음(ctrl+c)
+
 ![image](https://user-images.githubusercontent.com/84000890/124371908-4d620380-dcc1-11eb-81d0-4236ceb29d47.png)
+
 ↓ 쿠폰 구매하기(order)
 ```
 http POST http://localhost:8088/orders couponId=2 customerId=4 amt=18000 qty=1 orderDate=202107022055 status=Ordered
 ```
+
 < Success >
+
 ![image](https://user-images.githubusercontent.com/84000890/124371962-b3e72180-dcc1-11eb-929b-afd287346282.png)
 
 
 ## Deploy / Pipeline
 
-- 소스 가져오기
+- 소스 가져오기 [이미지 및 경로 : 수정] !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ```
 git clone https://github.com/kary000/car.git
 ```
@@ -622,7 +628,7 @@ git clone https://github.com/kary000/car.git
 
 - 빌드하기
 ```
-cd booking
+cd coupon
 mvn package
 
 cd customercenter
@@ -631,13 +637,13 @@ mvn package
 cd gateway
 mvn package
 
-cd product
+cd order
 mvn package
 
-cd store
+cd pay
 mvn package
 ```
-
+[수정 :  이미지 } !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ![image](https://user-images.githubusercontent.com/84000863/122197418-1de68500-ced3-11eb-8b10-7820e8a354b8.png)
 
 - 도커라이징(Dockerizing) : Azure Container Registry(ACR)에 Docker Image Push하기
