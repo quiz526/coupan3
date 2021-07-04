@@ -333,13 +333,13 @@ Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
 
 ```
 
-- 쿠폰구매 후의 myPage [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- 쿠폰구매 후의 myPage
+![image](https://user-images.githubusercontent.com/84000890/124371590-32da5b00-dcbe-11eb-8566-f1981887c6e0.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124350376-65894280-dc2f-11eb-9365-3bbee22daba8.png)
 
-- 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능) [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+- 구폰구매 취소 후의 myPage (변경된 상태 노출값 확인 가능)
+![image](https://user-images.githubusercontent.com/84000890/124371594-3a99ff80-dcbe-11eb-971f-67e1623526dd.png)
 
-![image](https://user-images.githubusercontent.com/84000890/124350394-86ea2e80-dc2f-11eb-90be-387b84e05355.png)
 
 
 ## 동기식 호출(Req/Resp)
@@ -478,22 +478,22 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: product
-          uri: http://localhost:8081
+        - id: coupon
+          uri: http://localhost:8081 
           predicates:
-            - Path=/products/**, /chkAndModifyStock/** 
-        - id: customercenter
+            - Path=/coupons/** , /chkAndModifyStock/**
+        - id: order
           uri: http://localhost:8082
           predicates:
-            - Path= /myPages/**
-        - id: store
+            - Path=/orders/** 
+        - id: pay
           uri: http://localhost:8083
           predicates:
-            - Path=/stores/** 
-        - id: booking
+            - Path=/payments/** 
+        - id: customercenter
           uri: http://localhost:8084
           predicates:
-            - Path=/bookings/** 
+            - Path= /mypages/**
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -513,22 +513,22 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: product
-          uri: http://product:8080
+        - id: coupon
+          uri: http://coupon:8080
           predicates:
-            - Path=/products/** , /chkAndModifyStock/** 
+            - Path=/coupons/** , /chkAndModifyStock/** 
+        - id: order
+          uri: http://order:8080
+          predicates:
+            - Path=/orders/** 
+        - id: pay
+          uri: http://pay:8080
+          predicates:
+            - Path=/payments/** 
         - id: customercenter
           uri: http://customercenter:8080
           predicates:
-            - Path= /myPages/**
-        - id: store
-          uri: http://store:8080
-          predicates:
-            - Path=/stores/** 
-        - id: booking
-          uri: http://booking:8080
-          predicates:
-            - Path=/bookings/** 
+            - Path= /mypages/**
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -542,90 +542,74 @@ spring:
 
 server:
   port: 8080
-  
 ```
 
 - gateway 테스트
 
 ```
-http http://localhost:8088/bookings
+http POST http://localhost:8088/orders couponId=2 customerId=3 amt=18000 qty=4 orderDate=202107022050 status=Ordered 
 ```
-![image](https://user-images.githubusercontent.com/84000863/122380621-07a7fa00-cfa3-11eb-94a0-4107bae6958a.png)
+↓ gateway 8080포트로 order 처리 시,  8082 포트로 링크되어 정상 처리
+![image](https://user-images.githubusercontent.com/84000890/124371661-0115c400-dcbf-11eb-8184-d1a396996a52.png)
 
 
 ## 비동기식 호출(Pub/Sub)
 
-예약(booking)이 이루어진 후에 업체(store)에서 차를 배차하는 행위는 동기식이 아니라 비 동기식으로 처리하여 업체(store)의 배차처리를 위하여 예약이 블로킹 되지 않도록 처리한다.
+- 구매 시스템(order)에서 처리 후에 결제 시스템(pay)에서 결제되는 행위는 동기식이 아니라 비 동기식으로 처리하여 결제 시스템(pay)의 결제 처리로 인해 구매시스템이 블로킹 되지 않도록 처리한다.
 
-- 이를 위하여 예약완료 되었음을 도메인 이벤트를 카프카로 송출한다(Publish)
+- 이를 위하여 구매완료 되었음을 도메인 이벤트를 카프카로 송출한다(Publish)
  
 ```
-    @PostPersist
-    public void onPostPersist() {
+   @PostPersist
+    public void onPostPersist(){
+        boolean rslt = OrderApplication.applicationContext.getBean(coupan.external.CouponService.class)
+        .modifyStock(this.getCouponId(), this.getQty());
 
+        if (rslt) {
+            this.setStatus("ordered");
+            //this.setStatus(System.getenv("STATUS"));
 
-            boolean rslt = BookingApplication.applicationContext.getBean(carrent.external.ProductService.class)
-            .modifyStock(this.getProductId(), this.getQty());
-
-            if (rslt) {
-                
-                Booked booked = new Booked();
-                booked.setStatus("Booked");
-                BeanUtils.copyProperties(this, booked);
-                booked.publishAfterCommit();
-            } 
+            Ordered ordered = new Ordered();
+            SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
+            String orderDate = format1.format (System.currentTimeMillis());
+            this.setOrderDate(orderDate);
+            BeanUtils.copyProperties(this, ordered);
+            ordered.publishAfterCommit();            
+        }
     }
 ```
-
-- 업체(store)에서는 예악완료(Booked) 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
-
+- 결제 시스템(pay)에서는 구매가 발생하면 이벤트를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다. (subscribe)
 ```
-package carrent;
+ public void wheneverOrdered_PreparePayment(@Payload Ordered ordered){
 
-...
+        if(ordered.isMe()){            
+            Payment pay = new Payment();
+            pay.setOrderId(ordered.getId());
+            pay.setCouponId(ordered.getCouponId());        
+            pay.setStatus("PayCompleted");
+            pay.setPayAmt(ordered.getAmt() * ordered.getQty());
 
-@Service
-public class PolicyHandler{
-    @Autowired 
-    StoreRepository storeRepository;
-
-    @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverBooked_PrepareCar(@Payload Booked booked){
-        /*
-        if(booked.isMe()){        
-            Optional<Store> optionalStore= storeRepository.findById(booked.getId());
-            Store store = optionalStore.get();
-            storeRepository.save(store);
-          }
-          */
-          if(booked.isMe()){            
-            Store store = new Store();
-            store.setBookingId(booked.getId());
-            store.setProductId(booked.getProductId());        
-            store.setStatus("CarRentStarted");
-            store.setQty(booked.getQty());
-            storeRepository.save(store);
-        }  
+            SimpleDateFormat format1 = new SimpleDateFormat ( "yyyyMMddHHmmss");
+            String payDate = format1.format (System.currentTimeMillis());
+            pay.setPayDate(payDate);
             
+            paymentRepository.save(pay);
+        }
     }
     
 ...
 
 ```
-예약(booking) 서비스는 업체(store) 서비스와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, store 서비스가 유지보수로 인해 잠시 내려간 상태라도 예약을 진행해도 문제 없다.(시간적 디커플링) :
+- 구매 시스템(order)는 결제 시스템(pay)와 완전히 분리되어있으며(sync transaction 없음) 이벤트 수신에 따라 처리되기 때문에, pay 서비스가 유지보수로 인해 잠시 내려간 상태라도 쿠폰 구매가 진행해도 문제 없다.(시간적 디커플링)
   
-- 업체(store) 서비스를 잠시 내려놓음(ctrl+c)
-
-![image](https://user-images.githubusercontent.com/84000863/122338704-04991380-cf7b-11eb-8dfe-22166ecdca77.png)
-
-- 예약하기(booking)
+↓ 업체(store) 서비스를 잠시 내려놓음(ctrl+c)
+![image](https://user-images.githubusercontent.com/84000890/124371908-4d620380-dcc1-11eb-81d0-4236ceb29d47.png)
+↓ 쿠폰 구매하기(order)
 ```
-http POST http://localhost:8084/bookings productId=1 qty=3 startDate=2021-07-01 endDate=2021-07-03 
+http POST http://localhost:8088/orders couponId=2 customerId=4 amt=18000 qty=1 orderDate=202107022055 status=Ordered
 ```
-
 < Success >
-
-![image](https://user-images.githubusercontent.com/84000863/122338729-0bc02180-cf7b-11eb-96d9-4eb7ce3ebc56.png)
+![image](https://user-images.githubusercontent.com/84000890/124371962-b3e72180-dcc1-11eb-929b-afd287346282.png)
 
 
 ## Deploy / Pipeline
