@@ -243,9 +243,13 @@ http GET http://localhost:8082/orders
 coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 서비스의 경우 Hsql DB로 구현하여, MSA간 서로 다른 종류의 DB간에도 문제 없이 동작하여 다형성을 만족하는지 확인하였다.
 
 - coupon, order 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-![image](https://user-images.githubusercontent.com/84000863/122320251-ed4b2d80-cf5c-11eb-85a9-e3a43e3e56d2.png)
-
+```
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+```
 - pay 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ![image](https://user-images.githubusercontent.com/84000863/122320209-ddcbe480-cf5c-11eb-920c-4d3f86cac072.png)
