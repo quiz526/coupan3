@@ -251,10 +251,14 @@ coupon 서비스와 order 서비스는 h2 DB로 구현하고, 그와 달리 pay 
 		</dependency>
 ```
 - pay 서비스의 pom.xml 설정 [이미지 확인필요]!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+```
+		<dependency>
+			<groupId>org.hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
-![image](https://user-images.githubusercontent.com/84000863/122320209-ddcbe480-cf5c-11eb-920c-4d3f86cac072.png)
-
-
+```
 ## CQRS
 
 Viewer를 별도로 구현하여 아래와 같이 view가 출력된다.
